@@ -106,7 +106,7 @@ body[data-p=cards] #cards,body[data-p=cards] #cards *,body[data-p=rekap] #rk,bod
 <div id="toast"></div>
 <script>
 // Isi URL Web App Google Apps Script di bawah ini (atau lewat menu Pengaturan).
-const API = '';
+const API = 'https://script.google.com/macros/s/AKfycbxZFEBaAMVnJVelFWUL_Nq2IQiJTzrtMRwyboHxj1TndUDURuDx7cp_3KkWiUqm2Ig5bQ/exec';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -148,7 +148,7 @@ async function muat() {
 async function masuk() {
   PIN = $('#pin').value;
   try {
-    if (cfg.url) await muat(); else if (PIN !== '1234') throw new Error('PIN uji coba: 1234');
+    if (cfg.url) await muat(); else if (PIN !== '30303570') throw new Error('PIN uji coba: 1234');
     $('#login').hidden = true; $('#app').hidden = false; $('#sk').textContent = cfg.nama; go('dash');
     $('#sync').textContent = cfg.url ? 'Tersinkron dengan Spreadsheet' : 'Mode lokal (belum terhubung)';
   } catch (e) { $('#err').textContent = e.message }
