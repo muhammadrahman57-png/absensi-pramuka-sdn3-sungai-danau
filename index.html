@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Absensi Pramuka - SDN 3 Sungai Danau</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Fraunces:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--b:#4A2F1E;--b2:#6B4630;--g:#D9A21B;--k:#EDE6D3;--p:#fff;--r:#C8102E;--t:#2B1D13;--m:#7a6a5c}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.5 Poppins,sans-serif;color:var(--t);background:var(--k)}
+h1,h3{font-family:Fraunces,serif;margin:0}
+h3{font-size:18px;margin-bottom:10px}
+[hidden]{display:none!important}
+button,.btn{font:inherit;background:var(--b);color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer;text-decoration:none;display:inline-block}
+button:hover,.btn:hover{background:var(--b2)}
+button.ghost{background:transparent;color:var(--b);border:1.5px solid var(--b)}
+input,select{font:inherit;padding:8px 10px;border:1.5px solid #cdbfa5;border-radius:8px;background:#fff;min-width:0}
+:focus-visible{outline:3px solid var(--g);outline-offset:1px}
+label{display:flex;flex-direction:column;font-size:12px;color:var(--m);gap:2px}
+#login{min-height:100vh;display:grid;place-items:center;background:var(--b);padding:16px}
+#login .box{background:#fff;border-radius:14px;padding:28px;width:100%;max-width:340px;border-top:8px solid var(--g);text-align:center}
+#login input{width:100%;margin:14px 0 10px;text-align:center;letter-spacing:6px}
+#app{display:flex;min-height:100vh}
+aside{width:210px;background:var(--b);color:#fff;padding:18px 12px;position:sticky;top:0;height:100vh;flex-shrink:0}
+.brand{font-family:Fraunces,serif;font-size:19px;line-height:1.2;padding:0 8px 16px;border-bottom:2px solid var(--g);margin-bottom:12px}
+.brand small{display:block;font:400 11px Poppins;opacity:.75;margin-top:4px}
+#nav button{display:block;width:100%;text-align:left;background:none;margin-bottom:2px;border-radius:8px;color:#e9dcc5}
+#nav button.on{background:var(--g);color:var(--b);font-weight:600}
+main{flex:1;min-width:0}
+.top{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;background:#fff;border-bottom:5px solid var(--g);position:relative}
+.top:after{content:"";position:absolute;left:0;right:0;bottom:-9px;height:4px;background:repeating-linear-gradient(90deg,var(--r) 0 24px,#fff 24px 48px)}
+#sync{font-size:12px;color:var(--m)}
+#v{padding:24px 22px 40px;display:grid;gap:16px}
+.card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(74,47,30,.12)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
+.row>input{flex:1;min-width:130px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stats .card{border-left:5px solid var(--g)}
+.stats small{color:var(--m);display:block}
+.stats b{font:700 28px Fraunces,serif;color:var(--b)}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th{background:var(--b);color:#fff;text-align:left;font-weight:500}
+th,td{padding:7px 10px;border-bottom:1px solid #eee3cf;white-space:nowrap}
+td button{padding:4px 9px;font-size:12px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px}
+.cal>b{text-align:center;font-size:12px;color:var(--m)}
+.day{background:#faf6ec;color:var(--t);border:1.5px solid transparent;min-height:54px;padding:4px;text-align:left;position:relative}
+.day:hover{background:#f1e7cf}
+.day.min{color:var(--r)}
+.day.keg{border-color:var(--g);background:#fdf1cf}
+.day.keg:before{content:"";position:absolute;right:6px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--g)}
+.day.now{box-shadow:inset 0 0 0 2px var(--b)}
+.day.sel{background:var(--b);color:#fff}
+.day i{display:block;font-size:11px;font-style:normal;color:var(--g)}
+.muted{color:var(--m);font-size:12px}
+#rd{max-width:420px;margin:12px auto}
+.hasil{margin-top:12px;padding:14px;border-radius:10px;background:#faf6ec;text-align:center;font-weight:500}
+.hasil.ok{background:#e1f2e4;color:#1b5e2b}
+.hasil.no{background:#fde4e4;color:#9b1c1c}
+#cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.kartu{border:2px solid var(--b);border-radius:10px;overflow:hidden;background:#fff;text-align:center;break-inside:avoid}
+.kh{background:var(--b);color:#fff;padding:8px;border-bottom:4px solid var(--g)}
+.kh b{font-family:Fraunces,serif}
+.kh small{display:block;font-size:11px;opacity:.8}
+.kb{padding:10px}
+.nm{font-weight:600}
+.kode{display:flex;justify-content:center;margin:8px 0 2px}
+#toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:var(--b);color:#fff;padding:10px 18px;border-radius:30px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9}
+#toast.on{opacity:1}#toast.err{background:var(--r)}
+@media(max-width:760px){
+#app{display:block}
+aside{position:fixed;bottom:0;left:0;right:0;top:auto;width:auto;height:auto;padding:6px;z-index:5}
+.brand{display:none}
+#nav{display:flex;overflow-x:auto;gap:4px}
+#nav button{width:auto;white-space:nowrap;margin:0}
+#v{padding:16px 12px 90px}
+}
+@media print{
+body *{visibility:hidden}
+body[data-p=cards] #cards,body[data-p=cards] #cards *,body[data-p=rekap] #rk,body[data-p=rekap] #rk *{visibility:visible}
+#cards,#rk{position:absolute;left:0;top:0;width:100%}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="login">
+ <div class="box">
+  <h1>Absensi Pramuka</h1>
+  <p class="muted" id="lm"></p>
+  <input id="pin" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off">
+  <button onclick="masuk()" style="width:100%">Masuk</button>
+  <p id="err" style="color:var(--r)"></p>
+ </div>
+</div>
+<div id="app" hidden>
+ <aside><div class="brand">Absensi Pramuka<small id="sk"></small></div><nav id="nav"></nav></aside>
+ <main><div class="top"><h1 id="ttl"></h1><span id="sync"></span></div><section id="v"></section></main>
+</div>
+<div id="toast"></div>
+<script>
+// Isi URL Web App Google Apps Script di bawah ini (atau lewat menu Pengaturan).
+const API = '';
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const L = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d } catch (e) { return d } };
+const W = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)) } catch (e) {} };
+const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const today = iso(new Date());
+const BLN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const tglIndo = t => new Date(t + 'T00:00').toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+
+let cfg = Object.assign({url:API, sheet:'', nama:'SD Negeri 3 Sungai Danau', pembina:''}, L('cfg', {}));
+if (API) cfg.url = cfg.url || API;
+let S = L('data', {siswa:[], jadwal:{}, absensi:[]});
+let PIN = '', view = 'dash', sel = today, cal = {y:+today.slice(0,4), m:+today.slice(5,7)-1};
+let ed = -1, q = '', fk = '', sc = null, last = '', lt = 0;
+const V = {};
+
+function toast(m, e) {
+  const t = $('#toast'); t.textContent = m; t.className = 'on' + (e ? ' err' : '');
+  clearTimeout(t._t); t._t = setTimeout(() => t.className = '', 2600);
+}
+function beep() {
+  try { const c = new (window.AudioContext || window.webkitAudioContext)(), o = c.createOscillator();
+    o.frequency.value = 880; o.connect(c.destination); o.start(); setTimeout(() => { o.stop(); c.close() }, 140) } catch (e) {}
+}
+async function api(b) {
+  const r = await fetch(cfg.url, {method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify({...b, pin:PIN})});
+  const j = await r.json(); if (j.error) throw new Error(j.error); return j;
+}
+async function sync(b) {
+  W('data', S); if (!cfg.url) { $('#sync').textContent = 'Mode lokal (belum terhubung)'; return }
+  try { await api(b); $('#sync').textContent = 'Tersinkron dengan Spreadsheet' }
+  catch (e) { toast('Gagal sinkron: ' + e.message, 1); $('#sync').textContent = 'Belum tersinkron' }
+}
+async function muat() {
+  const j = await api({action:'load'});
+  S = {siswa:j.siswa || [], jadwal:j.jadwal || {}, absensi:j.absensi || []}; W('data', S);
+}
+async function masuk() {
+  PIN = $('#pin').value;
+  try {
+    if (cfg.url) await muat(); else if (PIN !== '1234') throw new Error('PIN uji coba: 1234');
+    $('#login').hidden = true; $('#app').hidden = false; $('#sk').textContent = cfg.nama; go('dash');
+    $('#sync').textContent = cfg.url ? 'Tersinkron dengan Spreadsheet' : 'Mode lokal (belum terhubung)';
+  } catch (e) { $('#err').textContent = e.message }
+}
+$('#lm').textContent = cfg.nama + (cfg.url ? '' : ' - mode uji coba, data tersimpan di perangkat ini');
+$('#pin').addEventListener('keydown', e => e.key === 'Enter' && masuk());
+
+const NAV = [['dash','Beranda'],['siswa','Data Siswa'],['kal','Kalender'],['scan','Scan'],['kode','Kartu QR'],['rekap','Rekap'],['set','Pengaturan']];
+function go(v) {
+  if (sc) { sc.stop().catch(() => {}); sc = null }
+  view = v;
+  $('#nav').innerHTML = NAV.map(([k, n]) => `<button class="${k === v ? 'on' : ''}" onclick="go('${k}')">${n}</button>`).join('');
+  $('#ttl').textContent = NAV.find(n => n[0] === v)[1];
+  V[v]();
+}
+const tbl = (h, r) => `<div class="tw"><table><tr>${h.map(x => `<th>${x}</th>`).join('')}</tr>${r.map(x => `<tr>${x.map(c => `<td>${c}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${h.length}">Belum ada data.</td></tr>`}</table></div>`;
+const cnt = (t, s = 'Hadir') => S.absensi.filter(a => a.tanggal === t && a.status === s).length;
+const kls = () => [...new Set(S.siswa.map(s => s.kelas))].sort();
+const opsKelas = () => kls().map(k => `<option>${esc(k)}</option>`).join('');
+
+/* ---------- Beranda ---------- */
+V.dash = () => {
+  const m = today.slice(0, 7), pt = Object.keys(S.jadwal).filter(d => d.startsWith(m)).length, h = cnt(today), t = S.siswa.length;
+  const st = [['Jumlah siswa', t], ['Pertemuan bulan ini', pt], ['Hadir hari ini', h], ['Izin / sakit hari ini', cnt(today, 'Izin') + ' / ' + cnt(today, 'Sakit')], ['Kehadiran hari ini', t ? Math.round(h / t * 100) + '%' : '0%']];
+  $('#v').innerHTML = `<div class="stats">${st.map(([a, b]) => `<div class="card"><small>${a}</small><b>${b}</b></div>`).join('')}</div>
+  <div class="card"><h3>Absensi terbaru</h3>${tbl(['Tanggal','Jam','Nama','Kelas','Status'], S.absensi.slice(-8).reverse().map(a => [a.tanggal, a.jam, esc(a.nama), esc(a.kelas), a.status]))}</div>`;
+};
+
+/* ---------- Data siswa ---------- */
+const tabelS = () => {
+  const l = S.siswa.map((s, i) => ({...s, i})).filter(s => (!fk || s.kelas === fk) && (s.nama + s.nisn).toLowerCase().includes(q.toLowerCase()));
+  return tbl(['No','Nama siswa','NISN','Kelas','Kode','Aksi'], l.map((s, n) => [n + 1, esc(s.nama), esc(s.nisn), esc(s.kelas), esc(s.id), `<button class="ghost" onclick="ubah(${s.i})">Ubah</button> <button class="ghost" onclick="hapus(${s.i})">Hapus</button>`]));
+};
+V.siswa = () => {
+  $('#v').innerHTML = `<div class="card"><h3>${ed < 0 ? 'Tambah siswa' : 'Ubah siswa'}</h3>
+  <div class="row"><input id="fn" placeholder="Nama siswa"><input id="fi" placeholder="NISN"><input id="fl" placeholder="Kelas, mis. 6A" style="max-width:130px">
+  <button onclick="simpanS()">Simpan</button>${ed >= 0 ? '<button class="ghost" onclick="ed=-1;V.siswa()">Batal</button>' : ''}</div></div>
+  <div class="card"><div class="row"><input id="sq" placeholder="Cari nama atau NISN" value="${esc(q)}" oninput="q=this.value;$('#tb').innerHTML=tabelS()">
+  <select onchange="fk=this.value;$('#tb').innerHTML=tabelS()"><option value="">Semua kelas</option>${opsKelas()}</select>
+  <label class="btn" style="color:#fff;font-size:14px;cursor:pointer">Impor Excel/CSV<input type="file" accept=".xlsx,.xls,.csv" hidden onchange="impor(this)"></label>
+  <button class="ghost" onclick="expS()">Unduh Excel</button></div>
+  <p class="muted">Impor memakai kolom: Nama Siswa, NISN, Kelas. Kode kartu = NISN.</p><div id="tb">${tabelS()}</div></div>`;
+  $('#v').querySelector('select').value = fk;
+  if (ed >= 0) { const s = S.siswa[ed]; $('#fn').value = s.nama; $('#fi').value = s.nisn; $('#fl').value = s.kelas }
+};
+const saveS = () => sync({action:'setSiswa', siswa:S.siswa});
+function simpanS() {
+  const nama = $('#fn').value.trim(), nisn = $('#fi').value.trim(), kelas = $('#fl').value.trim().toUpperCase();
+  if (!nama || !kelas) return toast('Nama dan kelas wajib diisi', 1);
+  if (nisn && S.siswa.some((s, i) => s.nisn === nisn && i !== ed)) return toast('NISN sudah terdaftar', 1);
+  if (ed < 0) S.siswa.push({id:nisn || 'PRM' + Date.now().toString(36), nama, nisn, kelas});
+  else Object.assign(S.siswa[ed], {nama, nisn, kelas});
+  ed = -1; saveS(); toast('Data siswa disimpan'); V.siswa();
+}
+function ubah(i) { ed = i; V.siswa(); scrollTo(0, 0) }
+function hapus(i) { if (confirm('Hapus ' + S.siswa[i].nama + '?')) { S.siswa.splice(i, 1); saveS(); V.siswa() } }
+function impor(el) {
+  const f = el.files[0]; if (!f) return; const r = new FileReader();
+  r.onload = () => {
+    const wb = XLSX.read(r.result, {type:'array'}), rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {raw:false, defval:''});
+    let n = 0;
+    rows.forEach((o, i) => {
+      const g = w => { const k = Object.keys(o).find(k => k.toLowerCase().includes(w)); return k ? String(o[k]).trim() : '' };
+      const nama = g('nama'), nisn = g('nisn'), kelas = g('kelas').toUpperCase();
+      if (!nama || !kelas || (nisn && S.siswa.some(s => s.nisn === nisn))) return;
+      S.siswa.push({id:nisn || 'PRM' + Date.now().toString(36) + i, nama, nisn, kelas}); n++;
+    });
+    saveS(); toast(n + ' siswa ditambahkan'); V.siswa();
+  };
+  r.readAsArrayBuffer(f);
+}
+function expS() {
+  const ws = XLSX.utils.aoa_to_sheet([['Nama Siswa','NISN','Kelas'], ...S.siswa.map(s => [s.nama, s.nisn, s.kelas])]);
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'DataSiswa'); XLSX.writeFile(wb, 'DataSiswa_Pramuka.xlsx');
+}
+
+/* ---------- Kalender ---------- */
+V.kal = () => {
+  const {y, m} = cal, n = new Date(y, m + 1, 0).getDate(), off = (new Date(y, m, 1).getDay() + 6) % 7;
+  let c = '<div></div>'.repeat(off);
+  for (let d = 1; d <= n; d++) {
+    const t = iso(new Date(y, m, d));
+    c += `<button class="day${t === sel ? ' sel' : ''}${t === today ? ' now' : ''}${new Date(y, m, d).getDay() === 0 ? ' min' : ''}${t in S.jadwal ? ' keg' : ''}" onclick="sel='${t}';V.kal()">${d}<i>${cnt(t) || ''}</i></button>`;
+  }
+  const keg = sel in S.jadwal, hd = S.absensi.filter(a => a.tanggal === sel);
+  $('#v').innerHTML = `<div class="card"><div class="row"><button onclick="geser(-1)" aria-label="Bulan sebelumnya">&lsaquo;</button><h3 style="flex:1;text-align:center;margin:0">${BLN[m]} ${y}</h3><button onclick="geser(1)" aria-label="Bulan berikutnya">&rsaquo;</button></div>
+  <div class="cal">${['Sen','Sel','Rab','Kam','Jum','Sab','Min'].map(x => `<b>${x}</b>`).join('')}${c}</div>
+  <p class="muted">Titik emas: hari pertemuan Pramuka. Angka emas: jumlah siswa hadir. Hari Minggu berwarna merah.</p></div>
+  <div class="card"><h3>${tglIndo(sel)}</h3><div class="row"><input id="kt" placeholder="Keterangan kegiatan (materi, pembina)" value="${esc(S.jadwal[sel] || '')}">
+  <button onclick="setKeg(true)">${keg ? 'Simpan keterangan' : 'Jadikan hari pertemuan'}</button>${keg ? '<button class="ghost" onclick="setKeg(false)">Hapus pertemuan</button>' : ''}<button class="ghost" onclick="go('scan')">Absen tanggal ini</button></div>
+  ${tbl(['Jam','Nama','Kelas','Status'], hd.map(a => [a.jam, esc(a.nama), esc(a.kelas), a.status]))}</div>`;
+};
+function geser(d) { cal.m += d; if (cal.m < 0) { cal.m = 11; cal.y-- } if (cal.m > 11) { cal.m = 0; cal.y++ } V.kal() }
+function setKeg(on) {
+  if (on) S.jadwal[sel] = $('#kt').value.trim(); else delete S.jadwal[sel];
+  sync({action:'setJadwal', jadwal:S.jadwal}); V.kal();
+}
+
+/* ---------- Scan ---------- */
+V.scan = () => {
+  $('#v').innerHTML = `<div class="card"><div class="row"><label>Tanggal<input type="date" id="sd" value="${sel}"></label>
+  <label>Status<select id="ss"><option>Hadir</option><option>Izin</option><option>Sakit</option><option>Alpa</option></select></label></div>
+  <div id="rd"></div><div class="row" style="justify-content:center"><button id="bs" onclick="toggleScan()">Mulai scan</button></div>
+  <div id="hasil" class="hasil">Arahkan kamera ke QR atau barcode pada kartu siswa.</div></div>
+  <div class="card"><h3>Input manual</h3><div class="row"><input id="mn" list="dl" placeholder="Ketik NISN atau nama lengkap">
+  <datalist id="dl">${S.siswa.map(s => `<option value="${esc(s.id)}">${esc(s.nama)} (${esc(s.kelas)})</option>`).join('')}</datalist>
+  <button onclick="proses($('#mn').value,1)">Catat</button></div></div>`;
+};
+function toggleScan() {
+  if (sc) { sc.stop().catch(() => {}); sc = null; $('#bs').textContent = 'Mulai scan'; return }
+  sc = new Html5Qrcode('rd');
+  sc.start({facingMode:'environment'}, {fps:10, qrbox:{width:240, height:240}}, txt => {
+    const n = Date.now(); if (txt === last && n - lt < 3000) return; last = txt; lt = n; proses(txt);
+  }, () => {}).then(() => $('#bs').textContent = 'Hentikan scan').catch(e => { sc = null; toast('Kamera tidak bisa dibuka: ' + e, 1) });
+}
+function proses(kode, manual) {
+  const k = String(kode).trim(), h = $('#hasil'), t = $('#sd').value, st = $('#ss').value;
+  const s = S.siswa.find(x => x.id === k || x.nisn === k || x.nama.toLowerCase() === k.toLowerCase());
+  if (!s) { h.className = 'hasil no'; h.textContent = 'Kode "' + k + '" tidak ada di data siswa.'; return }
+  const ex = S.absensi.find(a => a.tanggal === t && a.id === s.id);
+  if (ex && !manual) { h.className = 'hasil no'; h.textContent = s.nama + ' sudah absen pukul ' + ex.jam + '.'; return }
+  const jam = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}).replace('.', ':');
+  let row = ex; if (ex) ex.status = st; else { row = {tanggal:t, jam, id:s.id, nama:s.nama, kelas:s.kelas, status:st, ket:''}; S.absensi.push(row) }
+  if (!(t in S.jadwal)) { S.jadwal[t] = ''; sync({action:'setJadwal', jadwal:S.jadwal}) }
+  sync({action:'addAbsensi', row}); beep();
+  h.className = 'hasil ok'; h.innerHTML = `${esc(s.nama)}<br><small>Kelas ${esc(s.kelas)} - ${st} - ${row.jam}</small>`;
+}
+
+/* ---------- Kartu QR / barcode ---------- */
+V.kode = () => {
+  $('#v').innerHTML = `<div class="card"><div class="row">
+  <label>Untuk<select id="km"><option value="semua">Semua siswa</option><option value="kelas">Satu kelas</option><option value="satu">Satu siswa</option></select></label>
+  <label>Kelas<select id="kk">${opsKelas()}</select></label>
+  <label>Siswa<select id="ks">${S.siswa.map(s => `<option value="${esc(s.id)}">${esc(s.nama)}</option>`).join('')}</select></label>
+  <label>Jenis kode<select id="kf"><option value="qr">QR Code</option><option value="bar">Barcode (Code128)</option></select></label>
+  <button onclick="buatKartu()">Buat kartu</button><button class="ghost" onclick="pr('cards')">Cetak / simpan PDF</button></div></div><div id="cards"></div>`;
+};
+function buatKartu() {
+  const m = $('#km').value, f = $('#kf').value;
+  const l = m === 'semua' ? S.siswa : m === 'kelas' ? S.siswa.filter(s => s.kelas === $('#kk').value) : S.siswa.filter(s => s.id === $('#ks').value);
+  $('#cards').innerHTML = l.map((s, i) => `<div class="kartu"><div class="kh"><b>Kartu Anggota Pramuka</b><small>${esc(cfg.nama)}</small></div>
+  <div class="kb"><div class="nm">${esc(s.nama)}</div><div>Kelas ${esc(s.kelas)}</div><div class="kode" id="c${i}"></div><small>${esc(s.id)}</small></div></div>`).join('');
+  l.forEach((s, i) => {
+    const el = $('#c' + i);
+    if (f === 'qr') new QRCode(el, {text:s.id, width:96, height:96});
+    else { el.innerHTML = '<svg></svg>'; JsBarcode(el.firstChild, s.id, {format:'CODE128', height:40, width:1.4, fontSize:10, margin:0, displayValue:false}) }
+  });
+  if (!l.length) toast('Tidak ada siswa untuk dibuatkan kartu', 1);
+}
+function pr(x) { document.body.dataset.p = x; print() }
+
+/* ---------- Rekap ---------- */
+V.rekap = () => {
+  const d = new Date(), a = iso(new Date(d.getFullYear(), d.getMonth(), 1)), b = iso(new Date(d.getFullYear(), d.getMonth() + 1, 0));
+  $('#v').innerHTML = `<div class="card"><div class="row"><label>Dari<input type="date" id="r1" value="${a}"></label><label>Sampai<input type="date" id="r2" value="${b}"></label>
+  <label>Kelas<select id="rk2"><option value="">Semua kelas</option>${opsKelas()}</select></label><button onclick="hitung()">Tampilkan</button></div></div>
+  <div class="card" id="rk"><h3>Rekap kehadiran</h3><p class="muted" id="rc"></p><div id="rt"></div></div>
+  <div class="row"><button onclick="expRekap()">Unduh Excel</button><button class="ghost" onclick="pr('rekap')">Cetak</button>${cfg.sheet ? `<a class="btn" href="${esc(cfg.sheet)}" target="_blank" rel="noopener">Buka Spreadsheet</a>` : ''}</div>`;
+  hitung();
+};
+function dataRekap() {
+  const r1 = $('#r1').value, r2 = $('#r2').value, k = $('#rk2').value, tg = Object.keys(S.jadwal).filter(t => t >= r1 && t <= r2);
+  const rows = S.siswa.filter(s => !k || s.kelas === k).sort((x, y) => x.kelas.localeCompare(y.kelas) || x.nama.localeCompare(y.nama)).map(s => {
+    const f = st => S.absensi.filter(a => a.id === s.id && tg.includes(a.tanggal) && a.status === st).length;
+    const h = f('Hadir'), i = f('Izin'), sk = f('Sakit');
+    return [s.nama, s.kelas, h, i, sk, Math.max(0, tg.length - h - i - sk), tg.length ? Math.round(h / tg.length * 100) + '%' : '-'];
+  });
+  return {tg, rows};
+}
+function hitung() {
+  const {tg, rows} = dataRekap();
+  $('#rc').textContent = tg.length + ' hari pertemuan pada rentang ini. Siswa tanpa catatan dihitung alpa.';
+  $('#rt').innerHTML = tbl(['Nama','Kelas','Hadir','Izin','Sakit','Alpa','% Hadir'], rows.map(r => [esc(r[0]), ...r.slice(1)]));
+}
+function expRekap() {
+  const {rows} = dataRekap(), ws = XLSX.utils.aoa_to_sheet([['Nama','Kelas','Hadir','Izin','Sakit','Alpa','% Hadir'], ...rows]);
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Rekap'); XLSX.writeFile(wb, 'Rekap_Pramuka.xlsx');
+}
+
+/* ---------- Pengaturan ---------- */
+V.set = () => {
+  $('#v').innerHTML = `<div class="card"><h3>Pengaturan</h3><div class="row" style="flex-direction:column;align-items:stretch">
+  <label>Nama sekolah<input id="cn" value="${esc(cfg.nama)}"></label><label>Nama pembina<input id="cp" value="${esc(cfg.pembina)}"></label>
+  <label>URL Web App (Google Apps Script)<input id="cu" value="${esc(cfg.url)}" placeholder="https://script.google.com/macros/s/.../exec"></label>
+  <label>Link Google Spreadsheet<input id="cs" value="${esc(cfg.sheet)}" placeholder="https://docs.google.com/spreadsheets/d/..."></label>
+  <div class="row"><button onclick="simpanCfg()">Simpan pengaturan</button><button class="ghost" onclick="muatUlang()">Muat ulang data dari Spreadsheet</button></div></div>
+  <p class="muted">Pengaturan tersimpan di perangkat ini. PIN diubah di Apps Script (Project Settings, Script Properties, PIN).</p></div>`;
+};
+function simpanCfg() {
+  cfg = {nama:$('#cn').value, pembina:$('#cp').value, url:$('#cu').value.trim(), sheet:$('#cs').value.trim()};
+  W('cfg', cfg); $('#sk').textContent = cfg.nama; toast('Pengaturan disimpan');
+}
+async function muatUlang() {
+  if (!cfg.url) return toast('Isi URL Web App dulu', 1);
+  try { await muat(); toast('Data dimuat dari Spreadsheet') } catch (e) { toast(e.message, 1) }
+}
+</script>
+</body>
+</html>
