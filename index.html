@@ -106,7 +106,7 @@ body[data-p=cards] #cards,body[data-p=cards] #cards *,body[data-p=rekap] #rk,bod
 <div id="toast"></div>
 <script>
 // Isi URL Web App Google Apps Script di bawah ini (atau lewat menu Pengaturan).
-const API = 'https://script.google.com/macros/s/AKfycbxZFEBaAMVnJVelFWUL_Nq2IQiJTzrtMRwyboHxj1TndUDURuDx7cp_3KkWiUqm2Ig5bQ/exec';
+const API = 'https://script.google.com/macros/s/AKfycbwK5IMv5yo9_gn_KqGG4bKodwByVu2PnM7RrEed2zzkxgt0xQJOVBKhMaOajrsUym1Mww/exec';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -156,7 +156,7 @@ async function masuk() {
 $('#lm').textContent = cfg.nama + (cfg.url ? '' : ' - mode uji coba, data tersimpan di perangkat ini');
 $('#pin').addEventListener('keydown', e => e.key === 'Enter' && masuk());
 
-const NAV = [['dash','Beranda'],['siswa','Data Siswa'],['kal','Kalender'],['scan','Scan'],['kode','Kartu QR'],['rekap','Rekap'],['set','Pengaturan']];
+const NAV = [['dash','Beranda'],['siswa','Data Siswa'],['kal','Kalender'],['scan','Scan'],['kode','Kartu QR'],['rekap','Rekap'],['reset','Reset'],['set','Pengaturan']];
 function go(v) {
   if (sc) { sc.stop().catch(() => {}); sc = null }
   view = v;
@@ -326,6 +326,42 @@ function hitung() {
 function expRekap() {
   const {rows} = dataRekap(), ws = XLSX.utils.aoa_to_sheet([['Nama','Kelas','Hadir','Izin','Sakit','Alpa','% Hadir'], ...rows]);
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Rekap'); XLSX.writeFile(wb, 'Rekap_Pramuka.xlsx');
+}
+
+/* ---------- Reset ---------- */
+V.reset = () => {
+  const d = new Date(), a = iso(new Date(d.getFullYear(), d.getMonth(), 1)), b = iso(new Date(d.getFullYear(), d.getMonth() + 1, 0));
+  $('#v').innerHTML = `<div class="card"><h3>Reset hasil scan / rekap kehadiran</h3>
+  <p class="muted">Menghapus catatan absensi agar scan bisa diulang dan rekap kembali kosong. Data siswa tidak ikut terhapus.</p>
+  <div class="row"><label>Cakupan<select id="xm" onchange="xUbah()"><option value="hari">Satu tanggal</option><option value="rentang">Rentang tanggal</option><option value="semua">Semua absensi</option></select></label>
+  <label>Dari / tanggal<input type="date" id="x1" value="${today}"></label>
+  <label id="x2w" hidden>Sampai<input type="date" id="x2" value="${b}"></label>
+  <label>Kelas<select id="xk"><option value="">Semua kelas</option>${opsKelas()}</select></label></div>
+  <label style="flex-direction:row;align-items:center;gap:8px;margin:12px 0"><input type="checkbox" id="xj"> Hapus juga penanda hari pertemuan pada cakupan ini</label>
+  <p class="hasil" id="xi"></p>
+  <div class="row"><button style="background:var(--r)" onclick="doReset()">Reset sekarang</button></div></div>`;
+  ['x1','x2','xk','xm'].forEach(i => $('#' + i).addEventListener('change', xInfo)); xInfo();
+};
+function xUbah() { $('#x2w').hidden = $('#xm').value !== 'rentang'; $('#x1').closest('label').firstChild.textContent = $('#xm').value === 'hari' ? 'Tanggal' : 'Dari'; $('#x1').closest('label').hidden = $('#xm').value === 'semua'; xInfo() }
+function xCocok(a) {
+  const m = $('#xm').value, k = $('#xk').value, t1 = $('#x1').value, t2 = $('#x2').value;
+  if (k && a.kelas !== k) return false;
+  return m === 'semua' || (m === 'hari' ? a.tanggal === t1 : a.tanggal >= t1 && a.tanggal <= t2);
+}
+function xInfo() { $('#xi').textContent = S.absensi.filter(xCocok).length + ' catatan absensi akan dihapus.' }
+async function doReset() {
+  const n = S.absensi.filter(xCocok).length, j = $('#xj').checked;
+  if (!n && !j) return toast('Tidak ada catatan pada cakupan ini', 1);
+  if (!confirm('Hapus ' + n + ' catatan absensi? Tindakan ini tidak bisa dibatalkan.')) return;
+  S.absensi = S.absensi.filter(a => !xCocok(a));
+  if (j) {
+    const m = $('#xm').value, t1 = $('#x1').value, t2 = $('#x2').value;
+    Object.keys(S.jadwal).forEach(t => { if (m === 'semua' || (m === 'hari' ? t === t1 : t >= t1 && t <= t2)) delete S.jadwal[t] });
+  }
+  W('data', S);
+  await sync({action:'setAbsensi', absensi:S.absensi});
+  if (j) await sync({action:'setJadwal', jadwal:S.jadwal});
+  last = ''; lt = 0; toast(n + ' catatan dihapus'); V.reset();
 }
 
 /* ---------- Pengaturan ---------- */
