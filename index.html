@@ -106,7 +106,7 @@ body[data-p=cards] #cards,body[data-p=cards] #cards *,body[data-p=rekap] #rk,bod
 <div id="toast"></div>
 <script>
 // Isi URL Web App Google Apps Script di bawah ini (atau lewat menu Pengaturan).
-const API = 'https://script.google.com/macros/s/AKfycbwK5IMv5yo9_gn_KqGG4bKodwByVu2PnM7RrEed2zzkxgt0xQJOVBKhMaOajrsUym1Mww/exec';
+const API = 'https://script.google.com/macros/s/AKfycbx56HpOoQJzPuNH5TDwrYxW1MqWYlpJZW5CDzFZxHs-nHCFNdcntawR1Gl_IibaflxyIA/exec';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -353,15 +353,28 @@ async function doReset() {
   const n = S.absensi.filter(xCocok).length, j = $('#xj').checked;
   if (!n && !j) return toast('Tidak ada catatan pada cakupan ini', 1);
   if (!confirm('Hapus ' + n + ' catatan absensi? Tindakan ini tidak bisa dibatalkan.')) return;
+  const cadangan = JSON.stringify(S);
   S.absensi = S.absensi.filter(a => !xCocok(a));
   if (j) {
     const m = $('#xm').value, t1 = $('#x1').value, t2 = $('#x2').value;
     Object.keys(S.jadwal).forEach(t => { if (m === 'semua' || (m === 'hari' ? t === t1 : t >= t1 && t <= t2)) delete S.jadwal[t] });
   }
-  W('data', S);
-  await sync({action:'setAbsensi', absensi:S.absensi});
-  if (j) await sync({action:'setJadwal', jadwal:S.jadwal});
-  last = ''; lt = 0; toast(n + ' catatan dihapus'); V.reset();
+  const btn = document.querySelector('#v button'); if (btn) btn.disabled = true;
+  try {
+    if (cfg.url) {
+      $('#sync').textContent = 'Menyinkronkan reset...';
+      await api({action:'setAbsensi', absensi:S.absensi});
+      if (j) await api({action:'setJadwal', jadwal:S.jadwal});
+      // pastikan database benar-benar sama dengan perangkat
+      await muat();
+      $('#sync').textContent = 'Tersinkron dengan Spreadsheet';
+    } else $('#sync').textContent = 'Mode lokal (belum terhubung)';
+    W('data', S); last = ''; lt = 0; toast(n + ' catatan dihapus dan tersinkron'); V.reset();
+  } catch (e) {
+    S = JSON.parse(cadangan); W('data', S);
+    $('#sync').textContent = 'Reset gagal, data dikembalikan';
+    toast('Reset gagal, database tidak berubah: ' + e.message, 1); V.reset();
+  }
 }
 
 /* ---------- Pengaturan ---------- */
