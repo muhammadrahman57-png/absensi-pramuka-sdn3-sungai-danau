@@ -128,9 +128,27 @@ function toast(m, e) {
   const t = $('#toast'); t.textContent = m; t.className = 'on' + (e ? ' err' : '');
   clearTimeout(t._t); t._t = setTimeout(() => t.className = '', 2600);
 }
-function beep() {
-  try { const c = new (window.AudioContext || window.webkitAudioContext)(), o = c.createOscillator();
-    o.frequency.value = 880; o.connect(c.destination); o.start(); setTimeout(() => { o.stop(); c.close() }, 140) } catch (e) {}
+/* ---------- Suara ---------- */
+let AC = null;
+let snd = Object.assign({on:true, voice:false}, L('snd', {}));
+function audio() {
+  try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch (e) {}
+  return AC;
+}
+function nada(seq, tipe = 'sine', vol = .25) {
+  if (!snd.on) return; const c = audio(); if (!c) return;
+  let t = c.currentTime;
+  seq.forEach(([f, d]) => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = tipe; o.frequency.value = f; g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + d); t += d * .9;
+  });
+}
+const beep = () => nada([[880, .12], [1320, .2]]);          // scan berhasil
+const bunyiGagal = () => nada([[300, .2], [220, .3]], 'square', .15); // kode tidak dikenal / sudah absen
+function ucap(txt) {
+  if (!snd.on || !snd.voice || !window.speechSynthesis) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(txt); u.lang = 'id-ID'; speechSynthesis.speak(u) } catch (e) {}
 }
 async function api(b) {
   const r = await fetch(cfg.url, {method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify({...b, pin:PIN})});
@@ -251,6 +269,10 @@ function setKeg(on) {
 V.scan = () => {
   $('#v').innerHTML = `<div class="card"><div class="row"><label>Tanggal<input type="date" id="sd" value="${sel}"></label>
   <label>Status<select id="ss"><option>Hadir</option><option>Izin</option><option>Sakit</option><option>Alpa</option></select></label></div>
+  <div class="row" style="margin-top:10px">
+  <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" ${snd.on ? 'checked' : ''} onchange="snd.on=this.checked;W('snd',snd);audio()"> Bunyi setelah scan</label>
+  <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" ${snd.voice ? 'checked' : ''} onchange="snd.voice=this.checked;W('snd',snd)"> Ucapkan nama</label>
+  <button class="ghost" onclick="audio();beep();ucap('Tes suara')">Tes suara</button></div>
   <div id="rd"></div><div class="row" style="justify-content:center"><button id="bs" onclick="toggleScan()">Mulai scan</button></div>
   <div id="hasil" class="hasil">Arahkan kamera ke QR atau barcode pada kartu siswa.</div></div>
   <div class="card"><h3>Input manual</h3><div class="row"><input id="mn" list="dl" placeholder="Ketik NISN atau nama lengkap">
@@ -259,6 +281,7 @@ V.scan = () => {
 };
 function toggleScan() {
   if (sc) { sc.stop().catch(() => {}); sc = null; $('#bs').textContent = 'Mulai scan'; return }
+  audio(); // aktifkan audio saat tombol ditekan agar tidak diblokir browser
   sc = new Html5Qrcode('rd');
   sc.start({facingMode:'environment'}, {fps:10, qrbox:{width:240, height:240}}, txt => {
     const n = Date.now(); if (txt === last && n - lt < 3000) return; last = txt; lt = n; proses(txt);
@@ -267,13 +290,13 @@ function toggleScan() {
 function proses(kode, manual) {
   const k = String(kode).trim(), h = $('#hasil'), t = $('#sd').value, st = $('#ss').value;
   const s = S.siswa.find(x => x.id === k || x.nisn === k || x.nama.toLowerCase() === k.toLowerCase());
-  if (!s) { h.className = 'hasil no'; h.textContent = 'Kode "' + k + '" tidak ada di data siswa.'; return }
+  if (!s) { h.className = 'hasil no'; h.textContent = 'Kode "' + k + '" tidak ada di data siswa.'; bunyiGagal(); return }
   const ex = S.absensi.find(a => a.tanggal === t && a.id === s.id);
-  if (ex && !manual) { h.className = 'hasil no'; h.textContent = s.nama + ' sudah absen pukul ' + ex.jam + '.'; return }
+  if (ex && !manual) { h.className = 'hasil no'; h.textContent = s.nama + ' sudah absen pukul ' + ex.jam + '.'; bunyiGagal(); return }
   const jam = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}).replace('.', ':');
   let row = ex; if (ex) ex.status = st; else { row = {tanggal:t, jam, id:s.id, nama:s.nama, kelas:s.kelas, status:st, ket:''}; S.absensi.push(row) }
   if (!(t in S.jadwal)) { S.jadwal[t] = ''; sync({action:'setJadwal', jadwal:S.jadwal}) }
-  sync({action:'addAbsensi', row}); beep();
+  sync({action:'addAbsensi', row}); beep(); ucap(s.nama + ', ' + st);
   h.className = 'hasil ok'; h.innerHTML = `${esc(s.nama)}<br><small>Kelas ${esc(s.kelas)} - ${st} - ${row.jam}</small>`;
 }
 
